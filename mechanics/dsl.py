@@ -116,6 +116,15 @@ def _infer_lhs_name() -> str | None:
     return None
 
 
+def _pick_axis(long_name: str, long_value: object, short_name: str, short_value: object, *, allow_none: bool = False) -> object:
+    default = None if allow_none else 0
+    long_given = long_value is not default
+    short_given = short_value is not default
+    if long_given and short_given:
+        raise TypeError(f"Specify either {long_name}= or {short_name}=, not both")
+    return short_value if short_given else long_value
+
+
 def _sympify(value: object) -> sp.Expr:
     if isinstance(value, float):
         return sp.Float(str(value))
@@ -167,13 +176,26 @@ class Particle:
         *,
         horizontal: object = 0,
         vertical: object = 0,
+        x: object = 0,
+        y: object = 0,
         label: str | None = None,
     ) -> Force:
+        horizontal = _pick_axis("horizontal", horizontal, "x", x)
+        vertical = _pick_axis("vertical", vertical, "y", y)
         force = Force(_sympify(horizontal), _sympify(vertical), label)
         self.forces.append(force)
         return force
 
-    def acceleration(self, *, horizontal: object | None = None, vertical: object | None = None) -> None:
+    def acceleration(
+        self,
+        *,
+        horizontal: object | None = None,
+        vertical: object | None = None,
+        x: object | None = None,
+        y: object | None = None,
+    ) -> None:
+        horizontal = _pick_axis("horizontal", horizontal, "x", x, allow_none=True)
+        vertical = _pick_axis("vertical", vertical, "y", y, allow_none=True)
         if horizontal is not None:
             self.accelerations["horizontal"] = _sympify(horizontal)
         if vertical is not None:
@@ -199,7 +221,16 @@ class System:
     built_equations: list[sp.Eq] = field(default_factory=list)
     solution: Solution | list[Solution] | None = None
 
-    def acceleration(self, *, horizontal: object | None = None, vertical: object | None = None) -> None:
+    def acceleration(
+        self,
+        *,
+        horizontal: object | None = None,
+        vertical: object | None = None,
+        x: object | None = None,
+        y: object | None = None,
+    ) -> None:
+        horizontal = _pick_axis("horizontal", horizontal, "x", x, allow_none=True)
+        vertical = _pick_axis("vertical", vertical, "y", y, allow_none=True)
         if horizontal is not None:
             self.accelerations["horizontal"] = _sympify(horizontal)
         if vertical is not None:
