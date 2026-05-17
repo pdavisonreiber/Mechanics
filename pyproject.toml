@@ -1,0 +1,10 @@
+[project]
+name = "mechanics-dsl"
+version = "0.1.0"
+description = "SymPy-backed DSL for A-Level mechanics problems"
+requires-python = ">=3.11"
+dependencies = ["sympy>=1.13"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
